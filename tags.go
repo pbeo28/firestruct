@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/bennovw/firestruct/internal/fields"
+	"github.com/pbeo28/firestruct/internal/fields"
 )
 
 type tagOptions struct {

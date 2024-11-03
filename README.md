@@ -1,8 +1,8 @@
 # firestruct
-[![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/github.com/bennovw/firestruct)
-[![Codecov](https://codecov.io/gh/bennovw/firestruct/branch/main/graph/badge.svg?token=MDBGUOQY6P)](https://codecov.io/gh/bennovw/firestruct)
-[![Go Report Card](https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat)](https://goreportcard.com/report/github.com/bennovw/firestruct)
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fbennovw%2Ffirestruct.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fbennovw%2Ffirestruct?ref=badge_shield)
+[![GoDoc](https://img.shields.io/badge/pkg.go.dev-doc-blue)](http://pkg.go.dev/github.com/pbeo28/firestruct)
+[![Codecov](https://codecov.io/gh/pbeo28/firestruct/branch/main/graph/badge.svg?token=MDBGUOQY6P)](https://codecov.io/gh/pbeo28/firestruct)
+[![Go Report Card](https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat)](https://goreportcard.com/report/github.com/pbeo28/firestruct)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpbeo28%2Ffirestruct.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpbeo28%2Ffirestruct?ref=badge_shield)
 
 This package deserializes protojson encoded Firestore documents as found in Firestore Cloud Events into a native Go map[string]interface{} or struct (without any protojson tags).
 
@@ -14,14 +14,14 @@ Google Cloud Functions can be triggered by events in Firestore (onCreate, onUpda
 This package makes it trivial to unwrap the encoded Firestore data and unmarshal your Cloud Event into native Go data structures. You can simply re-use the same structs used to create Firestore documents to handle incoming cloud events. This in turn neatly simplifies your data processing and validation within your codebase.
 
 ## Installation
-```go get github.com/bennovw/firestruct```
+```go get github.com/pbeo28/firestruct```
 
 ## Usage
-See the [examples](https://github.com/bennovw/firestruct/tree/main/examples) folder for more examples.
+See the [examples](https://github.com/pbeo28/firestruct/tree/main/examples) folder for more examples.
 
 ```go
 import (
-    "github.com/bennovw/firestruct"
+    "github.com/pbeo28/firestruct"
 )
 
 func MyCloudFunction(ctx context.Context, e event.Event) error {
@@ -70,7 +70,7 @@ type MyStruct struct {
 The package also provides two stand-alone functions to flatten a subset of Firestore data into a map[string]interface{} or unmarshal data directly into a struct without having to rely on type assertions or json.Marshal followed by json.Unmarshal
 ```go
 import (
-    "github.com/bennovw/firestruct"
+    "github.com/pbeo28/firestruct"
 )
 
 func MyCloudFunction(ctx context.Context, e event.Event) error {
@@ -99,4 +99,4 @@ func MyCloudFunction(ctx context.Context, e event.Event) error {
 ```
 
 ## License
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fbennovw%2Ffirestruct.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fbennovw%2Ffirestruct?ref=badge_large)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fpbeo28%2Ffirestruct.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fpbeo28%2Ffirestruct?ref=badge_large)

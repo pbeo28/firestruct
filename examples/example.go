@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bennovw/firestruct"
+	"github.com/pbeo28/firestruct"
 
 	"github.com/cloudevents/sdk-go/v2/event"
 	"github.com/davecgh/go-spew/spew"

@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bennovw/firestruct/internal/testutil"
+	"github.com/pbeo28/firestruct/internal/testutil"
 	"github.com/google/go-cmp/cmp"
 )
 
