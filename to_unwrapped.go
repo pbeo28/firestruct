@@ -1,4 +1,4 @@
-// Copyright 2023 Benno Van Waeyenberg
+// Copyright 2024 Pavllo Beo
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,19 +18,19 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 )
 
 // FirestoreFlatDataTypes lists Firestore protojson tags without nested data structures
 var FirestoreFlatDataTypes = []string{
-	"stringValue",
-	"booleanValue",
-	"integerValue",
-	"doubleValue",
-	"timestampValue",
-	"nullValue",
-	"bytesValue",
-	"referenceValue",
-	"geoPointValue",
+	strings.ToLower("stringValue"),
+	strings.ToLower("booleanValue"),
+	strings.ToLower("integerValue"),
+	strings.ToLower("doubleValue"),
+	strings.ToLower("nullValue"),
+	strings.ToLower("bytesValue"),
+	strings.ToLower("referenceValue"),
+	strings.ToLower("geoPointValue"),
 }
 
 // UnwrapFirestoreFields unwraps a map[string]any containing Firestore protojson encoded fields
@@ -61,13 +61,21 @@ func unwrapValue(value any) (any, error) {
 
 	// Handle each possible value type
 	for valueType, fieldValue := range valueMap {
-		switch strings.TrimSpace(valueType) {
-		case "mapValue":
+		switch strings.ToLower(strings.TrimSpace(valueType)) {
+		case "mapvalue":
 			return unwrapMapValue(fieldValue)
-		case "arrayValue":
+		case "valuetype":
+			return unwrapValue(fieldValue)
+		case "arrayvalue":
 			return unwrapArrayValue(fieldValue)
+		case "timestampvalue":
+			if maptime, ok := fieldValue.(map[string]interface{}); ok {
+				return mapToTimeString(maptime)
+			} else {
+				return fieldValue,nil
+			}
 		default:
-			if containsString(FirestoreFlatDataTypes, strings.TrimSpace(valueType)) {
+			if containsString(FirestoreFlatDataTypes, strings.ToLower(strings.TrimSpace(valueType))) {
 				return fieldValue, nil
 			}
 		}
@@ -75,6 +83,27 @@ func unwrapValue(value any) (any, error) {
 
 	return nil, fmt.Errorf("firestruct: no valid value type found")
 }
+
+func mapToTimeString(data map[string]interface{}) (string, error) {
+	// Extract seconds and nanoseconds from the map
+	seconds, ok := data["seconds"].(float64)
+	if !ok {
+		seconds=0
+	}
+	nanos, ok := data["nanos"].(float64)
+	if !ok {
+		nanos =0
+	}
+
+	// Create a time.Time from Unix seconds and nanoseconds
+	timestamp := time.Unix(int64(seconds), int64(nanos))
+
+	// Format the time as a string
+	formattedTime := timestamp.Format(time.RFC3339) // Change format as needed
+
+	return formattedTime, nil
+}
+
 
 // unwrapMapValue handles map values specifically
 func unwrapMapValue(value any) (map[string]any, error) {
