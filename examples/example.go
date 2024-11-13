@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cloud.google.com/go/firestore"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -29,6 +30,8 @@ type MyStruct struct {
 	NestedData map[string]any `firestore:"nestedMapData"`
 }
 
+var client *firestore.Client
+
 // MyCloudFunction is an example of how to use the firestruct package in a Google Cloud Function
 // The cloud function would be triggered by a Cloud Event after a Firestore Document changed in a collection
 func MyCloudFunction(ctx context.Context, e event.Event) error {
@@ -40,7 +43,7 @@ func MyCloudFunction(ctx context.Context, e event.Event) error {
 	}
 
 	x := MyStruct{}
-	err = cloudEvent.DataTo(&x)
+	err = cloudEvent.DataTo(client, &x)
 	if err != nil {
 		fmt.Printf("Error populating MyStruct: %s", err)
 		return err
@@ -61,8 +64,8 @@ func main() {
 	}
 
 	// Extract and unwrap a protojson encoded Firestore document from a Cloud Event
-    // Outputs a flattened map[string]interface{} without Firestore protojson tags
-	m, err := cloudEvent.ToMap()
+	// Outputs a flattened map[string]interface{} without Firestore protojson tags
+	m, err := cloudEvent.ToMap(client)
 	if err != nil {
 		fmt.Printf("Error converting firestore document to map: %s", err)
 	}
@@ -70,20 +73,20 @@ func main() {
 
 	// Unwrap and unmarshal a protojson encoded Firestore document into a struct
 	s := MyStruct{}
-	err = cloudEvent.DataTo(&s)
+	err = cloudEvent.DataTo(client, &s)
 	if err != nil {
 		fmt.Printf("Error converting firestore document to MyStruct: %s", err)
 	}
 	//spew.Dump(s)
 
 	// Unwraps a protojson encoded Firestore document, outputs a flattened map[string]interface{}
-	uf, err := firestruct.UnwrapFirestoreFields(cloudEvent.Value.Fields)
+	uf, err := firestruct.UnwrapFirestoreFields(client, cloudEvent.Value.Fields)
 	if err != nil {
 		fmt.Printf("Error unwrapping firestore data: %s", err)
 	}
 	//spew.Dump(uf)
 
-    // Unmarshals a map[string]interface{} directly into a struct
+	// Unmarshals a map[string]interface{} directly into a struct
 	st := MyStruct{}
 	err = firestruct.DataTo(&st, uf)
 	if err != nil {

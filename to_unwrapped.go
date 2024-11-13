@@ -15,6 +15,7 @@
 package firestruct
 
 import (
+	"cloud.google.com/go/firestore"
 	"errors"
 	"fmt"
 	"strings"
@@ -34,7 +35,7 @@ var FirestoreFlatDataTypes = []string{
 }
 
 // UnwrapFirestoreFields unwraps a map[string]any containing Firestore protojson encoded fields
-func UnwrapFirestoreFields(input map[string]any) (map[string]any, error) {
+func UnwrapFirestoreFields(client *firestore.Client, input map[string]any) (map[string]any, error) {
 	if input == nil {
 		return nil, errors.New("firestruct: nil map contents")
 	}
@@ -42,7 +43,7 @@ func UnwrapFirestoreFields(input map[string]any) (map[string]any, error) {
 	output := make(map[string]any, len(input))
 
 	for key, value := range input {
-		unwrappedValue, err := unwrapValue(value)
+		unwrappedValue, err := unwrapValue(client, value)
 		if err != nil {
 			return nil, fmt.Errorf("firestruct: error processing field %q: %w", key, err)
 		}
@@ -53,7 +54,7 @@ func UnwrapFirestoreFields(input map[string]any) (map[string]any, error) {
 }
 
 // unwrapValue handles any Firestore value type
-func unwrapValue(value any) (any, error) {
+func unwrapValue(client *firestore.Client, value any) (any, error) {
 	valueMap, ok := value.(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("firestruct: expected map[string]any, got %T", value)
@@ -63,16 +64,21 @@ func unwrapValue(value any) (any, error) {
 	for valueType, fieldValue := range valueMap {
 		switch strings.ToLower(strings.TrimSpace(valueType)) {
 		case "mapvalue":
-			return unwrapMapValue(fieldValue)
+			return unwrapMapValue(client, fieldValue)
 		case "valuetype":
-			return unwrapValue(fieldValue)
+			return unwrapValue(client, fieldValue)
 		case "arrayvalue":
-			return unwrapArrayValue(fieldValue)
+			return unwrapArrayValue(client, fieldValue)
+		case "referencevalue":
+			if client != nil {
+				return client.Doc(fieldValue.(string)), nil
+			}
+			return fieldValue, nil
 		case "timestampvalue":
 			if maptime, ok := fieldValue.(map[string]interface{}); ok {
-				return mapToTimeString(maptime)
+				return mapToTimeString(client, maptime)
 			} else {
-				return fieldValue,nil
+				return fieldValue, nil
 			}
 		default:
 			if containsString(FirestoreFlatDataTypes, strings.ToLower(strings.TrimSpace(valueType))) {
@@ -84,15 +90,15 @@ func unwrapValue(value any) (any, error) {
 	return nil, fmt.Errorf("firestruct: no valid value type found")
 }
 
-func mapToTimeString(data map[string]interface{}) (string, error) {
+func mapToTimeString(client *firestore.Client, data map[string]interface{}) (string, error) {
 	// Extract seconds and nanoseconds from the map
 	seconds, ok := data["seconds"].(float64)
 	if !ok {
-		seconds=0
+		seconds = 0
 	}
 	nanos, ok := data["nanos"].(float64)
 	if !ok {
-		nanos =0
+		nanos = 0
 	}
 
 	// Create a time.Time from Unix seconds and nanoseconds
@@ -104,9 +110,8 @@ func mapToTimeString(data map[string]interface{}) (string, error) {
 	return formattedTime, nil
 }
 
-
 // unwrapMapValue handles map values specifically
-func unwrapMapValue(value any) (map[string]any, error) {
+func unwrapMapValue(client *firestore.Client, value any) (map[string]any, error) {
 	mapValue, ok := value.(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("firestruct: expected map[string]any for mapValue, got %T", value)
@@ -119,15 +124,15 @@ func unwrapMapValue(value any) (map[string]any, error) {
 
 	// If has fields, process them
 	if fields, ok := mapValue["fields"].(map[string]any); ok {
-		return UnwrapFirestoreFields(fields)
+		return UnwrapFirestoreFields(client, fields)
 	}
 
 	// If direct map without fields
-	return UnwrapFirestoreFields(mapValue)
+	return UnwrapFirestoreFields(client, mapValue)
 }
 
 // unwrapArrayValue handles array values specifically
-func unwrapArrayValue(value any) ([]any, error) {
+func unwrapArrayValue(client *firestore.Client, value any) ([]any, error) {
 	arrayValue, ok := value.(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("firestruct: expected map[string]any for arrayValue, got %T", value)
@@ -142,7 +147,7 @@ func unwrapArrayValue(value any) ([]any, error) {
 
 	result := make([]any, len(values))
 	for i, val := range values {
-		unwrapped, err := unwrapValue(val)
+		unwrapped, err := unwrapValue(client, val)
 		if err != nil {
 			return nil, fmt.Errorf("firestruct: error processing array value at index %d: %w", i, err)
 		}

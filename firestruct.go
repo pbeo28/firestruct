@@ -21,6 +21,7 @@
 package firestruct
 
 import (
+	"cloud.google.com/go/firestore"
 	"errors"
 	"fmt"
 	"reflect"
@@ -45,13 +46,13 @@ func (e *FirestoreCloudEvent) Document() *FirestoreDocument {
 // DataTo uses the current version of the Firestore document to populate p, which should be a pointer to a struct or a pointer to a map[string]interface{}.
 // You may add tags to your struct fields formatted as `firestore:"changeme"` to specify the Firestore field name to use. If you do not specify a tag, the field name will be used.
 // If the Firestore document contains a field that is not present in the struct, it will be ignored. If the struct contains a field that is not present in the Firestore document, it will be set to its zero value.
-func (e *FirestoreCloudEvent) DataTo(p interface{}) error {
-	return e.Value.DataTo(p)
+func (e *FirestoreCloudEvent) DataTo(client *firestore.Client, p interface{}) error {
+	return e.Value.DataTo(client, p)
 }
 
 // ToMap returns the current version of the Firestore document as an unwrapped map[string]interface{} without any nested protojson type descriptor tags.
-func (e *FirestoreCloudEvent) ToMap() (map[string]any, error) {
-	m, err := e.Value.ToMap()
+func (e *FirestoreCloudEvent) ToMap(client *firestore.Client) (map[string]any, error) {
+	m, err := e.Value.ToMap(client)
 	return m, err
 }
 
@@ -97,9 +98,9 @@ type FirestoreDocument struct {
 //
 // Only the fields actually present in the document are used to populate p. Other fields
 // of p are left unchanged.
-func (d *FirestoreDocument) DataTo(p interface{}) error {
+func (d *FirestoreDocument) DataTo(client *firestore.Client, p interface{}) error {
 	// Remove Firestore protojson field tags from the document's fields.
-	flatDoc, err := d.ToMap()
+	flatDoc, err := d.ToMap(client)
 	if err != nil {
 		return fmt.Errorf("firestruct: error converting Firestore document to map %v", err)
 	}
@@ -108,12 +109,12 @@ func (d *FirestoreDocument) DataTo(p interface{}) error {
 }
 
 // ToMap converts a Firestore document to a native Go map[string]interface{} without protojson tags
-func (e *FirestoreDocument) ToMap() (map[string]any, error) {
+func (e *FirestoreDocument) ToMap(client *firestore.Client) (map[string]any, error) {
 	if e == nil {
 		return nil, errors.New("firestruct: nil document contents")
 	}
 
-	fields, err := UnwrapFirestoreFields(e.Fields)
+	fields, err := UnwrapFirestoreFields(client, e.Fields)
 	if err != nil {
 		return nil, err
 	}
