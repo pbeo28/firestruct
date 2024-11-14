@@ -71,7 +71,17 @@ func unwrapValue(client *firestore.Client, value any) (any, error) {
 			return unwrapArrayValue(client, fieldValue)
 		case "referencevalue":
 			if client != nil {
-				return client.Doc(fieldValue.(string)), nil
+				parts := strings.Split(fieldValue.(string), "/")
+				var documentPath string
+				for i, part := range parts {
+					if part == "documents" && i+1 < len(parts) {
+						documentPath = strings.Join(parts[i+1:], "/")
+						break
+					}
+				}
+
+				docRef := client.Doc(documentPath)
+				return docRef, nil
 			}
 			return fieldValue, nil
 		case "timestampvalue":

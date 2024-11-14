@@ -270,9 +270,10 @@ func dataToReflectPointer(p reflect.Value, data any) error {
 		x, ok := data.(map[string]any)
 		if !ok {
 			if docRef, ok := data.(*firestore.DocumentRef); ok {
-				// Successfully casted to *firestore.DocumentRef, return it
-				p.Set(reflect.ValueOf(docRef))
-				return nil
+				if ok && docRef != nil {
+					p.Set(reflect.ValueOf(*docRef))
+					return nil
+				}
 			}
 			return typeErr()
 		}
