@@ -20,14 +20,14 @@
 package firestruct
 
 import (
+	"cloud.google.com/go/firestore"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"reflect"
-	"time"
-
 	ts "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/uuid"
+	"reflect"
+	"time"
 
 	"github.com/pbeo28/firestruct/internal/fields"
 
@@ -269,6 +269,11 @@ func dataToReflectPointer(p reflect.Value, data any) error {
 	case reflect.Struct:
 		x, ok := data.(map[string]any)
 		if !ok {
+			if docRef, ok := data.(*firestore.DocumentRef); ok {
+				// Successfully casted to *firestore.DocumentRef, return it
+				p.Set(reflect.ValueOf(docRef))
+				return nil
+			}
 			return typeErr()
 		}
 		return populateStruct(p, x)
