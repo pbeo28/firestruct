@@ -69,6 +69,8 @@ func unwrapValue(client *firestore.Client, value any) (any, error) {
 			return unwrapValue(client, fieldValue)
 		case "arrayvalue":
 			return unwrapArrayValue(client, fieldValue)
+		case "nullvalue":
+			return nil, nil
 		case "referencevalue":
 			if client != nil {
 				parts := strings.Split(fieldValue.(string), "/")
